@@ -46,3 +46,4 @@ foreach ($domain in $domains) {
 Write-Host "-----------------------------"
 Write-Host "File Created .\out.csv"
 Add-Content -Value $responseStrings -Path ".\out.csv"
+Write-Host "sivam Mani"
