@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)]
     [string]$FilePath
 )
-. .\key.ps1
+. ..\key.ps1
 
 Clear-Host
 $content = Get-content $Name
