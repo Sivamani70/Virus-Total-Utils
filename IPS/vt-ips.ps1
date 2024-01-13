@@ -3,19 +3,17 @@ param(
     [Parameter(Mandatory)]
     [string]$FilePath
 )
-. .\key.ps1
-
+. ..\key.ps1
 
 Clear-Host
 $content = Get-content $FilePath
 $IPS = New-Object System.Collections.Generic.List[String]
-$responseStrings = New-Object System.Collections.Generic.List[String]
+$responseObj = New-Object System.Collections.Generic.List[PSCustomObject]
 $API_KEY = $KEY
 $headers = @{}
 $headers.Add("accept", "application/json")
 $headers.Add("x-apikey", $API_KEY)
 
-Set-Content -Value "IP, Owner, Country, TotalChecked, Harmless, Malicious, Suspicious, Undetected" -Path ".\out-IPS.csv"
 
 foreach ($line in $content) {
     $IPS.Add($line)
@@ -23,7 +21,6 @@ foreach ($line in $content) {
 
 
 Clear-Host
-# $inputData = @{}
 foreach ($ip in $IPS) {
     $URL = "https://www.virustotal.com/api/v3/ip_addresses/$ip"
     $response = Invoke-WebRequest -Method Get -Uri $URL -Headers $headers
@@ -37,28 +34,20 @@ foreach ($ip in $IPS) {
     $Undetected = $responseData.data.attributes.last_analysis_stats.undetected
     $TotalChecked = $Harmless + $Malicious + $Suspicious + $Undetected
 
-    Write-Host "-----------------------------"
-    Write-Host "IP: $CurrentIP"
-    Write-Host "Total Checked $TotalChecked"
-    Write-Host "Clean $Harmless"
-    Write-Host "Malicious: $Malicious"
-    Write-Host "Suspicious: $Suspicious"
-    Write-Host "Undetected: $Undetected"
 
-    $responseStrings.Add("$CurrentIP, $ASNOwner, $Country, $TotalChecked, $Harmless, $Malicious, $Suspicious, $Undetected")
-    # "IP, Owner, Country, TotalChecked, Harmless, Malicious, Suspicious, Undetected"
-    # $newData = @{}
-    # $newData.Add("IP", $CurrentIP)
-    # $newData.Add("Country", $Country)
-    # $newData.Add("TotalChecked", $TotalChecked)
-    # $newData.Add("Harmless", $Harmless)
-    # $newData.Add("Malicious", $Malicious)
-    # $newData.Add("Suspicious", $Suspicious)
-    # $newData.Add("Undetected", $Undetected)
+    $obj = [PSCustomObject]@{
+        IP           = $CurrentIP
+        Owner        = $ASNOwner
+        Country      = $Country
+        TotalChecked = $TotalChecked
+        Harmless     = $Harmless
+        Malicious    = $Malicious
+        Suspicious   = $Suspicious
+        Undetected   = $Undetected
+    }
 
+    $responseObj.Add($obj)
 } 
 
-# Export-Csv -InputObject $inputData -Path "outFile.csv"
-Write-Host "-----------------------------"
-Write-Host "File Created .\out-IPS.csv"
-Add-Content -Value $responseStrings -Path ".\out-IPS.csv"
+
+$responseObj | Export-Csv -Path "vt-out-ips.csv" -NoTypeInformation
