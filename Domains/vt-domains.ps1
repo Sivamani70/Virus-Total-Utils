@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory)]
-    [string]$Name
+    [string]$FilePath
 )
 . .\key.ps1
 
