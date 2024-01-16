@@ -1,19 +1,19 @@
-[CmdletBinding(SupportsShouldProcess = $true)]
-param(
+[CmdletBinding()]
+param (
     [Parameter(Mandatory)]
-    [string]$FilePath
+    [String] $APIKEY,
+    [Parameter(Mandatory)]
+    [String] $FilePath
 )
-. ..\key.ps1
 
 class VTIPReputation {
-    # 0. Req Fields
     [String] $filePath
     [System.Collections.Generic.List[String]] $listOfIPs
     [System.Collections.Generic.List[PSCustomObject]] $responseObj
     [System.Object[]] $content
     [Hashtable] $headers = @{}
-    [String] $basicPattern = "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
-    [String] $endPoint = "https://www.virustotal.com/api/v3/ip_addresses/"
+    [String] $IPV4Validator = "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+    [String] $ENDPOINT = "https://www.virustotal.com/api/v3/ip_addresses/"
   
 
     # 1. FilePath and Initiation
@@ -43,7 +43,7 @@ class VTIPReputation {
         Write-Host "Extracting IPS"
         foreach ($ip in $this.content) {
             $ip = $ip.Trim()
-            if ([System.Text.RegularExpressions.Regex]::IsMatch($ip, $this.basicPattern)) {
+            if ($ip -match $this.IPV4Validator) {
                 $this.listOfIPs.Add($ip)
             }
         }
@@ -64,10 +64,14 @@ class VTIPReputation {
 
         Write-Host "Checking IP reputation..."
         foreach ($ipAddress in $this.listOfIPs) {
-            [String] $finalURL = $this.endPoint + $ipAddress
+            [String] $finalURL = $this.ENDPOINT + $ipAddress
 
             try {
                 $response = Invoke-WebRequest -Method Get -Uri $finalURL -Headers $this.headers
+                if ($response.StatusCode -ne 200) {
+                    Write-Host "Something went wrong;  Status Code: $($response.StatusCode), Status Description: $($response.StatusDescription)"
+                    return;
+                }
                 $responseData = $response.Content | ConvertFrom-Json
                 $CurrentIP = $responseData.data.id 
                 $ASNOwner = $responseData.data.attributes.as_owner
@@ -80,7 +84,7 @@ class VTIPReputation {
 
                 $obj = [PSCustomObject]@{
                     IP           = $CurrentIP
-                    Owner        = $ASNOwner
+                    ASNOwner     = $ASNOwner
                     Country      = $Country
                     TotalChecked = $TotalChecked
                     Harmless     = $Harmless
@@ -115,5 +119,5 @@ class VTIPReputation {
     }
 }
 
-$vtIPRep = [VTIPReputation]::new($FilePath, $KEY)
+$vtIPRep = [VTIPReputation]::new($FilePath, $APIKEY)
 $vtIPRep.virusTotalIPReputation()
