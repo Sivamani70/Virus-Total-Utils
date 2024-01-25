@@ -55,3 +55,9 @@ Example: `.\vt-ips.ps1 -FilePath .\malicious-ips.txt -APIKEY "KEY1A2B3C4D"`
 4. The command essentially says, "Run the script named main.ps1, and while you're at it, ignore any execution policy restrictions that might normally prevent it from running."
 
 Example: `powershell.exe -ExecutionPolicy ByPass -File .\vt-ips.ps1 -FilePath .\malicious-ips.txt -APIKEY "KEY1A2B3C4D"`
+
+## Implementations InProgress
+
+- [x] IP Reputation
+- [ ] Domains Reputation
+- [ ] File Hash Reputation
