@@ -24,7 +24,6 @@ class VTIPReputation {
         $this.responseObj = New-Object System.Collections.Generic.List[PSCustomObject]
         $this.headers.Add("accept", "application/json")
         $this.headers.Add("x-apikey", $apiKey)
-
     }
 
     # 2. File Validation
