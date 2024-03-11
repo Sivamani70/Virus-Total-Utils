@@ -61,4 +61,5 @@ $RECYCLE.BIN/
 key.ps1
 *.txt
 *.csv
+*.xlsx
 test.ps1
