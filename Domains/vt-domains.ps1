@@ -35,6 +35,7 @@ class VTDomainReputation {
         }
         return $true
     }
+
     # 3. Domains Extraction
     [void] extractDomains() {
         Write-Host "Extracting Domains"
@@ -98,7 +99,17 @@ class VTDomainReputation {
         }
         if (($this.responseObj.Count) -eq 0) { return }
         Write-Host "Completed Checking $($this.responseObj.Count) - Domain(s)"
-        $this.createCSVFile($this.responseObj)
+        
+        # Checking Excel is installed or not
+        if (!(Test-Path -Path HKLM:\SOFTWARE\Microsoft\Office\*\Excel\)) {
+            Write-Host "Excel Application not found"
+            Write-Host "Creating CSV File"
+            $this.createCSVFile($this.responseObj)
+        }
+        else {
+            Write-Host "Excel Application found"
+            $this.createXLFile($this.responseObj)
+        }
 
     }
     # 5. CSV File Creation
@@ -107,6 +118,42 @@ class VTDomainReputation {
         $data | Export-Csv -Path "vt-out-domains.csv" -NoTypeInformation
         Write-Host "Completed.!" 
     }
+
+    # 6. If supported Create a xlsx file
+    [void] createXLFile([System.Collections.Generic.List[PSCustomObject]] $data) {
+        $excel = New-Object -ComObject Excel.Application
+        $workBook = $excel.Workbooks.Add()
+        $sheet = $workBook.Worksheets.Item(1)
+        $sheet.Name = "Domains Rep"
+        
+        $row = 1
+        $sheet.Cells.Item($row, 1) = "Domain"
+        $sheet.Cells.Item($row, 2) = "TotalChecked"
+        $sheet.Cells.Item($row, 3) = "Harmless"
+        $sheet.Cells.Item($row, 4) = "Malicious"
+        $sheet.Cells.Item($row, 5) = "Suspicious"
+        $sheet.Cells.Item($row, 6) = "Undetected"
+
+        $row = 2
+
+        forEach ($obj in $data) {
+            $sheet.Cells.Item($row, 1) = $obj.Domain
+            $sheet.Cells.Item($row, 2) = $obj.TotalChecked
+            $sheet.Cells.Item($row, 3) = $obj.Harmless
+            $sheet.Cells.Item($row, 4) = $obj.Malicious
+            $sheet.Cells.Item($row, 5) = $obj.Suspicious
+            $sheet.Cells.Item($row, 6) = $obj.Undetected
+            $row++
+        }
+        Write-Host "Creating vt-out-domains.xlsx file"
+        $currentPath = Get-Location
+        $completePath = $currentPath.Path + "\vt-out-domains.xlsx"  
+        $workBook.SaveAs($completePath)
+        $workbook.Close()
+        $excel.Quit()
+        [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
+        Write-Host "Completed.!" 
+    }   
 
 }
 
