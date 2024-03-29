@@ -41,7 +41,7 @@
 - Run the below command  
   `.\vt-ips.ps1 -FilePath "file_name with the IPs" -APIKEY "YOUR_APIKEY"`
 - **_-FilePath_**: takes the path of the file contains the IPs  
-   `'.txt' file with each IP seperated by new line`
+   `'.txt' file with each IP separated by new line`
 
 Example: `.\vt-ips.ps1 -FilePath .\malicious-ips.txt -APIKEY "KEY1A2B3C4D"`
 
@@ -59,5 +59,5 @@ Example: `powershell.exe -ExecutionPolicy ByPass -File .\vt-ips.ps1 -FilePath .\
 ## Implementations InProgress
 
 - [x] IP Reputation
-- [ ] Domains Reputation
+- [x] Domains Reputation
 - [ ] File Hash Reputation

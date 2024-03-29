@@ -106,7 +106,19 @@ class VTIPReputation {
         }
         if (($this.responseObj.Count) -eq 0) { return }
         Write-Host "Completed Checking $($this.responseObj.Count) - IP(s)"
-        $this.createCSVFile($this.responseObj)
+
+        if (!(Test-Path -Path HKLM:\SOFTWARE\Microsoft\Office\*\Excel\)) {
+            Write-Host "Excel Application not found"
+            Write-Host "Creating CSV File"
+            $this.createCSVFile($this.responseObj)
+        }
+        else {
+            Write-Host "Excel Application found"
+            Write-Host "Creating Excel File"
+            $this.createXLFile($this.responseObj)
+        }
+
+
 
     }
 
@@ -116,6 +128,46 @@ class VTIPReputation {
         $data | Export-Csv -Path "vt-out-ips.csv" -NoTypeInformation
         Write-Host "Completed.!" 
     }
+
+    # 6. If supported Create a xlsx file
+    [void] createXLFile([System.Collections.Generic.List[PSCustomObject]] $data) {
+        $excel = New-Object -ComObject Excel.Application
+        $workBook = $excel.Workbooks.Add()
+        $sheet = $workBook.Worksheets.Item(1)
+        $sheet.Name = "IPs Rep"
+        
+        $row = 1
+        $sheet.Cells.Item($row, 1) = "IP"
+        $sheet.Cells.Item($row, 2) = "ASNOwner"
+        $sheet.Cells.Item($row, 3) = "Country"
+        $sheet.Cells.Item($row, 4) = "TotalChecked"
+        $sheet.Cells.Item($row, 5) = "Harmless"
+        $sheet.Cells.Item($row, 6) = "Malicious"
+        $sheet.Cells.Item($row, 7) = "Suspicious"
+        $sheet.Cells.Item($row, 8) = "Undetected"
+
+        $row = 2
+
+        forEach ($obj in $data) {
+            $sheet.Cells.Item($row, 1) = $obj.IP
+            $sheet.Cells.Item($row, 2) = $obj.ASNOwner
+            $sheet.Cells.Item($row, 3) = $obj.Country
+            $sheet.Cells.Item($row, 4) = $obj.TotalChecked
+            $sheet.Cells.Item($row, 5) = $obj.Harmless
+            $sheet.Cells.Item($row, 6) = $obj.Malicious
+            $sheet.Cells.Item($row, 7) = $obj.Suspicious
+            $sheet.Cells.Item($row, 8) = $obj.Undetected
+            $row++
+        }
+        Write-Host "Creating vt-out-ips.xlsx file"
+        $currentPath = Get-Location
+        $completePath = $currentPath.Path + "\vt-out-ips.xlsx"  
+        $workBook.SaveAs($completePath)
+        $workbook.Close()
+        $excel.Quit()
+        [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
+        Write-Host "Completed.!" 
+    }   
 }
 
 $vtIPRep = [VTIPReputation]::new($FilePath, $APIKEY)
