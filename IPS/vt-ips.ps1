@@ -117,9 +117,6 @@ class VTIPReputation {
             Write-Host "Creating Excel File"
             $this.createXLFile($this.responseObj)
         }
-
-
-
     }
 
     # 5. CSV File Creation

@@ -63,3 +63,5 @@ key.ps1
 *.csv
 *.xlsx
 test.ps1
+*.json
+*.jsonc
