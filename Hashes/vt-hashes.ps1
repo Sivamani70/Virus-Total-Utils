@@ -51,7 +51,7 @@ class VTHashReputation {
         }
     }
 
-    #TODO: 4. Hash Rep Checking
+    #4. Hash Rep Checking
     [void] VirusTotalHashReputation() {
         Clear-Host
         if (!$this.IsFileValid($this.FilePath)) {
@@ -117,16 +117,66 @@ class VTHashReputation {
         if (!(Test-Path -Path HKLM:\SOFTWARE\Microsoft\Office\*\Excel\)) {
             Write-Host "Excel Application not found"
             Write-Host "Creating CSV File"
-            $this.createCSVFile($this.responseObj)
+            $this.CreateCSVFile($this.responseObj)
         }
         else {
             Write-Host "Excel Application found"
             Write-Host "Creating Excel File"
-            $this.createXLFile($this.responseObj)
+            $this.CreateXLFile($this.responseObj)
         }
     }
-    #TODO: 5. CSV Creation
-    #TODO: 6. If supported create Excel
+
+    #5. CSV Creation
+    [void] CreateCSVFile([System.Collections.Generic.List[PSCustomObject]] $data) {
+        Write-Host "Creating vt-out-hash.csv file"
+        $data | Export-Csv -Path "vt-out-hash.csv" -NoTypeInformation
+        Write-Host "Completed.!" 
+    }
+
+    #6. If supported create Excel
+    [void] CreateXLFile([System.Collections.Generic.List[PSCustomObject]] $data) {
+        $excel = New-Object -ComObject Excel.Application
+        $workBook = $excel.Workbooks.Add()
+        $sheet = $workBook.Worksheets.Item(1)
+        $sheet.Name = "Hash Rep"
+        
+        $row = 1
+        $sheet.Cells.Item($row, 1) = "MD5"
+        $sheet.Cells.Item($row, 2) = "SHA1"
+        $sheet.Cells.Item($row, 3) = "SHA256"
+        $sheet.Cells.Item($row, 4) = "FileTag"
+        $sheet.Cells.Item($row, 5) = "FileDescription"
+        $sheet.Cells.Item($row, 6) = "TotalChecked"
+        $sheet.Cells.Item($row, 7) = "Harmless"
+        $sheet.Cells.Item($row, 8) = "Malicious"
+        $sheet.Cells.Item($row, 9) = "Suspicious"
+        $sheet.Cells.Item($row, 10) = "Undetected"
+
+        $row = 2
+
+        forEach ($obj in $data) {
+            $sheet.Cells.Item($row, 1) = $obj.MD5
+            $sheet.Cells.Item($row, 2) = $obj.SHA1
+            $sheet.Cells.Item($row, 3) = $obj.SHA256
+            $sheet.Cells.Item($row, 4) = $obj.FileTag
+            $sheet.Cells.Item($row, 5) = $obj.FileDescription
+            $sheet.Cells.Item($row, 6) = $obj.TotalChecked
+            $sheet.Cells.Item($row, 7) = $obj.Harmless
+            $sheet.Cells.Item($row, 8) = $obj.Malicious
+            $sheet.Cells.Item($row, 9) = $obj.Suspicious
+            $sheet.Cells.Item($row, 10) = $obj.Undetected
+            $row++
+        }
+        Write-Host "Creating vt-out-hash.xlsx file"
+        $currentPath = Get-Location
+        $completePath = $currentPath.Path + "\vt-out-hash.xlsx"  
+        $workBook.SaveAs($completePath)
+        $workbook.Close()
+        $excel.Quit()
+        [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
+        Write-Host "Completed.!" 
+    }
+  
 }
 
 
