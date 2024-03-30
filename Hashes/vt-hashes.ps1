@@ -101,8 +101,8 @@ class VTHashReputation {
                 $this.ResponseObj.Add($obj)
             }
             catch [System.Net.WebException] {
-                Write-Error "Status Code $($_.Exception.Response.StatusCode)"
-                Write-Error $($_.Exception.Response)
+                Write-Warning "No matches found in VT for: $hash"
+                Write-Error "Status $($_.Exception.Response.StatusCode)"
             }
             catch {
                 Write-Error "Something went wrong"
@@ -112,7 +112,7 @@ class VTHashReputation {
         }
 
         if (($this.responseObj.Count) -eq 0) { return }
-        Write-Host "Completed Checking $($this.responseObj.Count) - IP(s)"
+        Write-Host "Completed Checking $($this.responseObj.Count) - Hash value(s)"
 
         if (!(Test-Path -Path HKLM:\SOFTWARE\Microsoft\Office\*\Excel\)) {
             Write-Host "Excel Application not found"
