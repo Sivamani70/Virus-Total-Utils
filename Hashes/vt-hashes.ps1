@@ -92,6 +92,7 @@ class VTHashReputation {
                     SHA256          = $SHA256
                     FileTag         = $FileTag
                     FileDescription = $TypeDescription
+                    Result          = "$Malicious//$TotalChecked"
                     TotalChecked    = $TotalChecked
                     Harmless        = $Harmless
                     Malicious       = $Malicious
@@ -126,55 +127,72 @@ class VTHashReputation {
         }
     }
 
+    [String] getFileName() {
+        [DateTime] $dateTime = Get-Date
+        [String] $timeStamp = "$($dateTime.DateTime)"
+        return "VT-Hash-Out-File - $timeStamp"
+    }
+
     #5. CSV Creation
-    [void] CreateCSVFile([System.Collections.Generic.List[PSCustomObject]] $data) {
-        Write-Host "Creating vt-out-hash.csv file"
-        $data | Export-Csv -Path "vt-out-hash.csv" -NoTypeInformation
-        Write-Host "Completed.!" 
+    [void] createCSVFile([System.Collections.Generic.List[PSCustomObject]] $data) {
+        [String] $fileName = $this.getFileName()
+        Write-Host "Creating $fileName.csv file"
+        $data | Export-Csv -Path "$fileName.csv" -NoTypeInformation
+        Write-Host "Completed creating $fileName.csv" 
     }
 
     #6. If supported create Excel
     [void] CreateXLFile([System.Collections.Generic.List[PSCustomObject]] $data) {
         $excel = New-Object -ComObject Excel.Application
-        $workBook = $excel.Workbooks.Add()
-        $sheet = $workBook.Worksheets.Item(1)
-        $sheet.Name = "Hash Rep"
+        [String] $fileName = $this.getFileName()
+
+        try {
+            $workBook = $excel.Workbooks.Add()
+            $sheet = $workBook.Worksheets.Item(1)
+            $sheet.Name = "Hash Rep"
         
-        $row = 1
-        $sheet.Cells.Item($row, 1) = "MD5"
-        $sheet.Cells.Item($row, 2) = "SHA1"
-        $sheet.Cells.Item($row, 3) = "SHA256"
-        $sheet.Cells.Item($row, 4) = "FileTag"
-        $sheet.Cells.Item($row, 5) = "FileDescription"
-        $sheet.Cells.Item($row, 6) = "TotalChecked"
-        $sheet.Cells.Item($row, 7) = "Harmless"
-        $sheet.Cells.Item($row, 8) = "Malicious"
-        $sheet.Cells.Item($row, 9) = "Suspicious"
-        $sheet.Cells.Item($row, 10) = "Undetected"
+            $row = 1
+            $sheet.Cells.Item($row, 1) = "MD5"
+            $sheet.Cells.Item($row, 2) = "SHA1"
+            $sheet.Cells.Item($row, 3) = "SHA256"
+            $sheet.Cells.Item($row, 4) = "FileTag"
+            $sheet.Cells.Item($row, 5) = "FileDescription"
+            $sheet.Cells.Item($row, 6) = "Result"
+            $sheet.Cells.Item($row, 7) = "TotalChecked"
+            $sheet.Cells.Item($row, 8) = "Harmless"
+            $sheet.Cells.Item($row, 9) = "Malicious"
+            $sheet.Cells.Item($row, 10) = "Suspicious"
+            $sheet.Cells.Item($row, 11) = "Undetected"
 
-        $row = 2
+            $row = 2
 
-        forEach ($obj in $data) {
-            $sheet.Cells.Item($row, 1) = $obj.MD5
-            $sheet.Cells.Item($row, 2) = $obj.SHA1
-            $sheet.Cells.Item($row, 3) = $obj.SHA256
-            $sheet.Cells.Item($row, 4) = $obj.FileTag
-            $sheet.Cells.Item($row, 5) = $obj.FileDescription
-            $sheet.Cells.Item($row, 6) = $obj.TotalChecked
-            $sheet.Cells.Item($row, 7) = $obj.Harmless
-            $sheet.Cells.Item($row, 8) = $obj.Malicious
-            $sheet.Cells.Item($row, 9) = $obj.Suspicious
-            $sheet.Cells.Item($row, 10) = $obj.Undetected
-            $row++
+            forEach ($obj in $data) {
+                $sheet.Cells.Item($row, 1) = $obj.MD5
+                $sheet.Cells.Item($row, 2) = $obj.SHA1
+                $sheet.Cells.Item($row, 3) = $obj.SHA256
+                $sheet.Cells.Item($row, 4) = $obj.FileTag
+                $sheet.Cells.Item($row, 5) = $obj.FileDescription
+                $sheet.Cells.Item($row, 6) = $obj.Result
+                $sheet.Cells.Item($row, 7) = $obj.TotalChecked
+                $sheet.Cells.Item($row, 8) = $obj.Harmless
+                $sheet.Cells.Item($row, 9) = $obj.Malicious
+                $sheet.Cells.Item($row, 10) = $obj.Suspicious
+                $sheet.Cells.Item($row, 11) = $obj.Undetected
+                $row++
+            }
+            Write-Host "Creating $fileName.xlsx file"
+            $currentPath = Get-Location
+            $completePath = $currentPath.Path + "\$fileName.xlsx"  
+            $workBook.SaveAs($completePath)
+            $workbook.Close()
+            $excel.Quit()
+            Write-Host "Completed creating $fileName.xlsx file"
         }
-        Write-Host "Creating vt-out-hash.xlsx file"
-        $currentPath = Get-Location
-        $completePath = $currentPath.Path + "\vt-out-hash.xlsx"  
-        $workBook.SaveAs($completePath)
-        $workbook.Close()
-        $excel.Quit()
-        [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
-        Write-Host "Completed.!" 
+        finally {
+            [int] $exitCode = [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
+            Write-Host "Closed Excel App with status code $exitCode"    
+        }
+
     }
   
 }

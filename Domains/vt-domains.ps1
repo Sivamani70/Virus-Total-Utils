@@ -79,6 +79,7 @@ class VTDomainReputation {
 
                 $obj = [PSCustomObject]@{
                     Domain       = $CurrentDomain
+                    Result       = "$Malicious//$TotalChecked"                    
                     TotalChecked = $TotalChecked
                     Harmless     = $Harmless
                     Malicious    = $Malicious
@@ -112,47 +113,64 @@ class VTDomainReputation {
         }
 
     }
+
+    [String] getFileName() {
+        [DateTime] $dateTime = Get-Date
+        [String] $timeStamp = "$($dateTime.DateTime)"
+        return "VT-Domains-Out-File - $timeStamp"
+    }
+
     # 5. CSV File Creation
     [void] createCSVFile([System.Collections.Generic.List[PSCustomObject]] $data) {
-        Write-Host "Creating vt-out-domains.csv file"
-        $data | Export-Csv -Path "vt-out-domains.csv" -NoTypeInformation
-        Write-Host "Completed.!" 
+        [String] $fileName = $this.getFileName()
+        Write-Host "Creating $fileName.csv file"
+        $data | Export-Csv -Path "$fileName.csv" -NoTypeInformation
+        Write-Host "Completed creating $fileName.csv" 
     }
 
     # 6. If supported Create a xlsx file
     [void] createXLFile([System.Collections.Generic.List[PSCustomObject]] $data) {
         $excel = New-Object -ComObject Excel.Application
-        $workBook = $excel.Workbooks.Add()
-        $sheet = $workBook.Worksheets.Item(1)
-        $sheet.Name = "Domains Rep"
+        [String] $fileName = $this.getFileName()
+        try {
+            
+            $workBook = $excel.Workbooks.Add()
+            $sheet = $workBook.Worksheets.Item(1)
+            $sheet.Name = "Domains Rep"
         
-        $row = 1
-        $sheet.Cells.Item($row, 1) = "Domain"
-        $sheet.Cells.Item($row, 2) = "TotalChecked"
-        $sheet.Cells.Item($row, 3) = "Harmless"
-        $sheet.Cells.Item($row, 4) = "Malicious"
-        $sheet.Cells.Item($row, 5) = "Suspicious"
-        $sheet.Cells.Item($row, 6) = "Undetected"
+            $row = 1
+            $sheet.Cells.Item($row, 1) = "Domain"
+            $sheet.Cells.Item($row, 2) = "Result"
+            $sheet.Cells.Item($row, 3) = "TotalChecked"
+            $sheet.Cells.Item($row, 4) = "Harmless"
+            $sheet.Cells.Item($row, 5) = "Malicious"
+            $sheet.Cells.Item($row, 6) = "Suspicious"
+            $sheet.Cells.Item($row, 7) = "Undetected"
 
-        $row = 2
+            $row = 2
 
-        forEach ($obj in $data) {
-            $sheet.Cells.Item($row, 1) = $obj.Domain
-            $sheet.Cells.Item($row, 2) = $obj.TotalChecked
-            $sheet.Cells.Item($row, 3) = $obj.Harmless
-            $sheet.Cells.Item($row, 4) = $obj.Malicious
-            $sheet.Cells.Item($row, 5) = $obj.Suspicious
-            $sheet.Cells.Item($row, 6) = $obj.Undetected
-            $row++
+            forEach ($obj in $data) {
+                $sheet.Cells.Item($row, 1) = $obj.Domain
+                $sheet.Cells.Item($row, 2) = $obj.Result
+                $sheet.Cells.Item($row, 3) = $obj.TotalChecked
+                $sheet.Cells.Item($row, 4) = $obj.Harmless
+                $sheet.Cells.Item($row, 5) = $obj.Malicious
+                $sheet.Cells.Item($row, 6) = $obj.Suspicious
+                $sheet.Cells.Item($row, 7) = $obj.Undetected
+                $row++
+            }
+            Write-Host "Creating $fileName.xlsx file"
+            $currentPath = Get-Location
+            $completePath = $currentPath.Path + "\$fileName.xlsx"  
+            $workBook.SaveAs($completePath)
+            $workbook.Close()
+            $excel.Quit()
+            Write-Host "Completed creating $fileName.xlsx file"   
         }
-        Write-Host "Creating vt-out-domains.xlsx file"
-        $currentPath = Get-Location
-        $completePath = $currentPath.Path + "\vt-out-domains.xlsx"  
-        $workBook.SaveAs($completePath)
-        $workbook.Close()
-        $excel.Quit()
-        [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
-        Write-Host "Completed.!" 
+        finally {
+            [int] $exitCode = [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
+            Write-Host "Closed Excel App with status code $exitCode"    
+        }
     }   
 
 }

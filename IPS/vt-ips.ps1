@@ -85,6 +85,7 @@ class VTIPReputation {
                     IP           = $CurrentIP
                     ASNOwner     = $ASNOwner
                     Country      = $Country
+                    Result       = "$Malicious//$TotalChecked"
                     TotalChecked = $TotalChecked
                     Harmless     = $Harmless
                     Malicious    = $Malicious
@@ -119,51 +120,67 @@ class VTIPReputation {
         }
     }
 
+    [String] getFileName() {
+        [DateTime] $dateTime = Get-Date
+        [String] $timeStamp = "$($dateTime.DateTime)"
+        return "VT-IP-Out-File - $timeStamp"
+    }
+
     # 5. CSV File Creation
     [void] createCSVFile([System.Collections.Generic.List[PSCustomObject]] $data) {
-        Write-Host "Creating vt-out-ips.csv file"
-        $data | Export-Csv -Path "vt-out-ips.csv" -NoTypeInformation
-        Write-Host "Completed.!" 
+        [String] $fileName = $this.getFileName()
+        Write-Host "Creating $fileName.csv file"
+        $data | Export-Csv -Path "$fileName.csv" -NoTypeInformation
+        Write-Host "Completed creating $fileName.csv" 
     }
 
     # 6. If supported Create a xlsx file
     [void] createXLFile([System.Collections.Generic.List[PSCustomObject]] $data) {
         $excel = New-Object -ComObject Excel.Application
-        $workBook = $excel.Workbooks.Add()
-        $sheet = $workBook.Worksheets.Item(1)
-        $sheet.Name = "IPs Rep"
+        [String] $fileName = $this.getFileName()
+        try {
+            $workBook = $excel.Workbooks.Add()
+            $sheet = $workBook.Worksheets.Item(1)
+            $sheet.Name = "IPs Rep"
         
-        $row = 1
-        $sheet.Cells.Item($row, 1) = "IP"
-        $sheet.Cells.Item($row, 2) = "ASNOwner"
-        $sheet.Cells.Item($row, 3) = "Country"
-        $sheet.Cells.Item($row, 4) = "TotalChecked"
-        $sheet.Cells.Item($row, 5) = "Harmless"
-        $sheet.Cells.Item($row, 6) = "Malicious"
-        $sheet.Cells.Item($row, 7) = "Suspicious"
-        $sheet.Cells.Item($row, 8) = "Undetected"
+            $row = 1
+            $sheet.Cells.Item($row, 1) = "IP"
+            $sheet.Cells.Item($row, 2) = "ASNOwner"
+            $sheet.Cells.Item($row, 3) = "Country"
+            $sheet.Cells.Item($row, 4) = "Result"
+            $sheet.Cells.Item($row, 5) = "TotalChecked"
+            $sheet.Cells.Item($row, 6) = "Harmless"
+            $sheet.Cells.Item($row, 7) = "Malicious"
+            $sheet.Cells.Item($row, 8) = "Suspicious"
+            $sheet.Cells.Item($row, 9) = "Undetected"
 
-        $row = 2
+            $row = 2
 
-        forEach ($obj in $data) {
-            $sheet.Cells.Item($row, 1) = $obj.IP
-            $sheet.Cells.Item($row, 2) = $obj.ASNOwner
-            $sheet.Cells.Item($row, 3) = $obj.Country
-            $sheet.Cells.Item($row, 4) = $obj.TotalChecked
-            $sheet.Cells.Item($row, 5) = $obj.Harmless
-            $sheet.Cells.Item($row, 6) = $obj.Malicious
-            $sheet.Cells.Item($row, 7) = $obj.Suspicious
-            $sheet.Cells.Item($row, 8) = $obj.Undetected
-            $row++
+            forEach ($obj in $data) {
+                $sheet.Cells.Item($row, 1) = $obj.IP
+                $sheet.Cells.Item($row, 2) = $obj.ASNOwner
+                $sheet.Cells.Item($row, 3) = $obj.Country
+                $sheet.Cells.Item($row, 4) = $obj.Result
+                $sheet.Cells.Item($row, 5) = $obj.TotalChecked
+                $sheet.Cells.Item($row, 6) = $obj.Harmless
+                $sheet.Cells.Item($row, 7) = $obj.Malicious
+                $sheet.Cells.Item($row, 8) = $obj.Suspicious
+                $sheet.Cells.Item($row, 9) = $obj.Undetected
+                $row++
+            }
+            Write-Host "Creating $fileName.xlsx file"
+            $currentPath = Get-Location
+            $completePath = $currentPath.Path + "\$fileName.xlsx"  
+            $workBook.SaveAs($completePath)
+            $workbook.Close()
+            $excel.Quit()
+            Write-Host "Completed creating $fileName.xlsx file"
         }
-        Write-Host "Creating vt-out-ips.xlsx file"
-        $currentPath = Get-Location
-        $completePath = $currentPath.Path + "\vt-out-ips.xlsx"  
-        $workBook.SaveAs($completePath)
-        $workbook.Close()
-        $excel.Quit()
-        [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
-        Write-Host "Completed.!" 
+        finally {
+            [int] $exitCode = [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
+            Write-Host "Closed Excel App with status code $exitCode"    
+        }
+        
     }   
 }
 
