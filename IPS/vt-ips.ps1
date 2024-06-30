@@ -120,11 +120,11 @@ class VTIPReputation {
         }
     }
 
+
     [String] getFileName() {
-        [DateTime] $dateTime = Get-Date
-        [String] $timeStamp = "$($dateTime.DateTime)"
-        return "VT-IP-Out-File - $timeStamp"
-    }
+        [String] $fileName = Read-Host  -Prompt "Enter File Name Without Extension"
+        return "VT-IP-Out-File - $fileName"
+    }    
 
     # 5. CSV File Creation
     [void] createCSVFile([System.Collections.Generic.List[PSCustomObject]] $data) {

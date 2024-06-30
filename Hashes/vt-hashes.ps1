@@ -128,10 +128,9 @@ class VTHashReputation {
     }
 
     [String] getFileName() {
-        [DateTime] $dateTime = Get-Date
-        [String] $timeStamp = "$($dateTime.DateTime)"
-        return "VT-Hash-Out-File - $timeStamp"
-    }
+        [String] $fileName = Read-Host  -Prompt "Enter File Name Without Extension"
+        return "VT-Hash-Out-File - $fileName"
+    }    
 
     #5. CSV Creation
     [void] createCSVFile([System.Collections.Generic.List[PSCustomObject]] $data) {

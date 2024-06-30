@@ -115,9 +115,8 @@ class VTDomainReputation {
     }
 
     [String] getFileName() {
-        [DateTime] $dateTime = Get-Date
-        [String] $timeStamp = "$($dateTime.DateTime)"
-        return "VT-Domains-Out-File - $timeStamp"
+        [String] $fileName = Read-Host  -Prompt "Enter File Name Without Extension"
+        return "VT-Domains-Out-File - $fileName"
     }
 
     # 5. CSV File Creation
